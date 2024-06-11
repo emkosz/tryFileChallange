@@ -1,14 +1,16 @@
 // kunna ladda upp filer av typ xml, pdf och jpeg samt metadata        [v]
 // spara upladdare, filnamn, beskrivning, datum i datastorage          [v]
-// lista filerna i en kolumn, ikoner beskriver de olika filtyperna     []
+// lista filerna i en kolumn                                           []                                         
+// ikoner beskriver de olika filtyperna                                []
 // det ska ga att oppna och ladda ner filerna                          []
 // det ska ga att ta bort filerna                                      []
 
 
 
-import express from 'express';
+import express, { json } from 'express';
 import formidable from 'formidable';
 import fs from 'fs/promises';
+import storage from './storage.json' assert { type: "json" };
 
 const app = express();
 
@@ -32,29 +34,64 @@ app.post('/api/upload', (req, res, next) => {
       next(err);
       return;
     }
-    console.log(files.someExpressFiles[0].originalFilename);
-
-    const orgFilename = files.someExpressFiles[0].originalFilename
+    const orgFilename = files.someExpressFiles[0].originalFilename;
 
     if (orgFilename.endsWith('.xml') || orgFilename.endsWith('.pdf') || orgFilename.endsWith('.jpg')) {
 
-        const content = 'uploader,description,file,extension,date;';
-        fs.appendFile('storage.xls', content, err => {
+        const fileData = {
+            "Uploader": fields.uploader[0],
+            "Description": fields.title[0],
+            "File": orgFilename,
+            "FilePath": files.someExpressFiles[0].filepath,
+            "Extension": "extension",
+            "Date": Date.now()
+        }
+
+        console.log('storage before push', storage);
+        storage.push(fileData);
+        console.log('storage after push', storage);
+
+        fs.writeFile('storage.json', JSON.stringify(fileData), err => {
         if (err) {
             console.error(err);
         } else {
-            // done!
+            console.log('File uploaded correctly');
         }
         });
 
         res.json({ fields, files });
     } else {
-        console.log('wrong file extension')
-        res.json("Unlawful file extension. .jpg, .png and .xml allowed").status(400)
+        console.log('wrong file extension');
+        res.json("Unlawful file extension. .jpg, .png and .xml allowed").status(400);
     }
    
   });
 });
+
+app.get('/files', (req, res) => {
+
+    const view =
+    `<table border="1"> 
+        <tr> 
+            <th>Header 1</th> 
+            <th>Header 2</th> 
+            <th>Header 3</th> 
+        </tr> 
+        <tr> 
+            <td>Data 1</td> 
+            <td>Data 2</td> 
+            <td>Data 3</td> 
+        </tr> 
+        <tr> 
+            <td>Data 4</td> 
+            <td>Data 5</td> 
+            <td>Data 6</td> 
+        </tr> 
+    </table>`
+
+    res.send(view);
+
+})
 
 app.listen(3000, () => {
   console.log('Server listening on http://localhost:3000 ...');

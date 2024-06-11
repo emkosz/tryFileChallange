@@ -1,5 +1,5 @@
 // kunna ladda upp filer av typ xml, pdf och jpeg samt metadata        [v]
-// spara upladdare, filnamn, beskrivning, datum i datastorage          []
+// spara upladdare, filnamn, beskrivning, datum i datastorage          [v]
 // lista filerna i en kolumn, ikoner beskriver de olika filtyperna     []
 // det ska ga att oppna och ladda ner filerna                          []
 // det ska ga att ta bort filerna                                      []
@@ -8,6 +8,7 @@
 
 import express from 'express';
 import formidable from 'formidable';
+import fs from 'fs/promises';
 
 const app = express();
 
@@ -36,6 +37,16 @@ app.post('/api/upload', (req, res, next) => {
     const orgFilename = files.someExpressFiles[0].originalFilename
 
     if (orgFilename.endsWith('.xml') || orgFilename.endsWith('.pdf') || orgFilename.endsWith('.jpg')) {
+
+        const content = 'uploader,description,file,extension,date;';
+        fs.appendFile('storage.xls', content, err => {
+        if (err) {
+            console.error(err);
+        } else {
+            // done!
+        }
+        });
+
         res.json({ fields, files });
     } else {
         console.log('wrong file extension')

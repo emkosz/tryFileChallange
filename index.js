@@ -2,7 +2,7 @@
 // spara upladdare, filnamn, beskrivning, datum i datastorage          [v]
 // lista filerna i en kolumn                                           [v]
 // ikoner beskriver de olika filtyperna                                []
-// det ska ga att oppna och ladda ner filerna                          []
+// det ska ga att ladda ner filerna                                    [v]
 // det ska ga att ta bort filerna                                      []
 
 import express, { json } from 'express';
@@ -61,11 +61,9 @@ app.post('/api/upload', (req, res, next) => {
   });
 });
 
-async function readFile() {
+async function readFile(path) {
   try {
-    const data = await fs.readFile('./storage.json', { encoding: 'utf8' });
-    const parsedData = JSON.parse(data);
-    return parsedData;
+    return await fs.readFile(path, { encoding: 'utf8' });
   } catch (err) {
     console.log(err);
   }
@@ -82,9 +80,23 @@ function generateTable(data) {
   }
 
 app.get('/files', async (req, res) => {
-  const fileData = await readFile();
-  const view = generateTable(fileData);
+  const storagePath = './storage.json';
+  const fileData = await readFile(storagePath);
+  const parsedFileData = JSON.parse(fileData);
+  const view = generateTable(parsedFileData);
   res.send(view);
+})
+
+app.get('/download', async (req, res) => {
+  const filePath = "/var/folders/qh/n_fqny510xlgd8ljrvfp7gd80000gn/T/f52dbe47e937743b7c46c2f01";
+
+  res.download(filePath, err => {
+    if(err) {
+      console.log(err);
+    } else {
+
+    }
+  })
 })
 
 app.listen(3000, () => {

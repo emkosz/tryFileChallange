@@ -12,17 +12,41 @@ import storage from './storage.json' assert { type: "json" };
 
 const app = express();
 
-app.get('/', (req, res) => {
+app.get('/', async (req, res) => {
+  const fileTable = await generateFileTable();
+  const fileForm = generateFileForm()
+
   res.send(`
-    <h2>With <code>"express"</code> npm package</h2>
-    <form action="/api/upload" enctype="multipart/form-data" method="post">
-      <div>Text field title: <input type="text" name="title" /></div>
-      <div>Name of uploader: <input type="text" name="uploader" /></div>
-      <div>File: <input type="file" name="someExpressFiles" multiple="multiple" /></div>
-      <input type="submit" value="Upload" />
-    </form>
+    <h2>Files</h2>
+    <body>${fileTable}</body>
+    <h2>Upload files</h2>
+    <body>${fileForm}</body>
   `);
 });
+
+async function generateFileTable() {
+  const storagePath = './storage.json';
+  const fileData = await readFile(storagePath);
+  const data = JSON.parse(fileData);
+
+  let table = '<table border="1">';
+  table += '<tr><th>Uploader</th><th>Description</th> <th>File</th><th>Filepath</th></tr>';
+  data.forEach(e => {
+    table += `<tr><td>${e.uploader}</td><td>${e.description}</td><td>${e.file}</td><td>${e.filePath}</td></tr>`;
+  });
+  table += '</table>';
+  return table;
+  }
+
+function generateFileForm() {
+  let form = '<form action="/api/upload" enctype="multipart/form-data" method="post">';
+  form += '<div>Name of uploader: <input type="text" name="uploader" /></div>';
+  form += '<div>Description of file: <input type="description" name="description" /></div>';
+  form += '<div>File: <input type="file" name="someExpressFiles" multiple="multiple" /></div>'
+  form += '<input type="submit" value="Upload" />'
+  form += '</form>'
+  return form;
+}
 
 app.post('/api/upload', (req, res, next) => {
   const form = formidable({});
@@ -53,7 +77,7 @@ app.post('/api/upload', (req, res, next) => {
           }
         });
 
-        res.json({ fields, files });
+        res.redirect('/')
     } else {
         console.log('wrong file extension');
         res.json("Unlawful file extension. .jpg, .png and .xml allowed").status(400);
@@ -68,24 +92,6 @@ async function readFile(path) {
     console.log(err);
   }
 }
-
-function generateTable(data) {
-  let table = '<table border="1">';
-  table += '<tr><th>Uploader</th><th>Description</th> <th>File</th><th>Filepath</th></tr>';
-  data.forEach(e => {
-    table += `<tr><td>${e.uploader}</td><td>${e.description}</td><td>${e.file}</td><td>${e.filePath}</td></tr>`;
-  });
-  table += '</table>';
-  return table;
-  }
-
-app.get('/files', async (req, res) => {
-  const storagePath = './storage.json';
-  const fileData = await readFile(storagePath);
-  const parsedFileData = JSON.parse(fileData);
-  const view = generateTable(parsedFileData);
-  res.send(view);
-})
 
 app.get('/download', async (req, res) => {
   const filePath = "/var/folders/qh/n_fqny510xlgd8ljrvfp7gd80000gn/T/f52dbe47e937743b7c46c2f01";

@@ -9,6 +9,7 @@ import express, { json } from 'express';
 import formidable from 'formidable';
 import fs from 'fs/promises';
 import storage from './storage.json' assert { type: "json" };
+import { v4 as uuidv4 } from 'uuid';
 
 const app = express();
 
@@ -30,13 +31,14 @@ async function generateFileTable() {
   const data = JSON.parse(fileData);
 
   let table = '<table border="1">';
-  table += '<tr><th>Uploader</th><th>Description</th> <th>File</th><th>Filepath</th></tr>';
+  table += '<tr><th>Uploader</th><th>Description</th> <th>Filename</th><th>Download</th></tr>';
   data.forEach(e => {
-    table += `<tr><td>${e.uploader}</td><td>${e.description}</td><td>${e.file}</td><td>${e.filePath}</td></tr>`;
+    table += `<tr><td>${e.uploader}</td><td>${e.description}</td><td>${e.file}</td>`;
+    table += `<td><a href=/api/download/${e.id} target=_blank>Download file</a></td></tr>`;
   });
   table += '</table>';
   return table;
-  }
+}
 
 function generateFileForm() {
   let form = '<form action="/api/upload" enctype="multipart/form-data" method="post">';
@@ -62,11 +64,12 @@ app.post('/api/upload', (req, res, next) => {
 
         const fileData = {
             uploader: fields.uploader[0],
-            description: fields.title[0],
+            description: fields.description[0],
             file: orgFilename,
             filePath: files.someExpressFiles[0].filepath,
             extension: "extension",
-            date: Date.now()
+            date: Date.now(),
+            id: uuidv4()
         };
         storage.push(fileData);
         fs.writeFile('storage.json', JSON.stringify(storage), err => {
@@ -93,14 +96,18 @@ async function readFile(path) {
   }
 }
 
-app.get('/download', async (req, res) => {
-  const filePath = "/var/folders/qh/n_fqny510xlgd8ljrvfp7gd80000gn/T/f52dbe47e937743b7c46c2f01";
+app.get('/api/download/:fileId', (req, res) => {
+  const id = req.params.fileId;
+  const filePath = storage.find(x => x.id === id).filePath;
+  const fileName = storage.find(x => x.id === id).file;
 
-  res.download(filePath, err => {
+  res.download(filePath, fileName, err => {
     if(err) {
+      console.log('download failed')
       console.log(err);
+      res.status(404);
     } else {
-
+      console.log('file downloaded successfully');
     }
   })
 })

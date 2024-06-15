@@ -7,6 +7,8 @@
 
 import express, { json } from 'express';
 import formidable from 'formidable';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import fs from 'fs/promises';
 import storage from './storage.json' assert { type: "json" };
 import { v4 as uuidv4 } from 'uuid';
@@ -31,7 +33,7 @@ async function generateFileTable() {
   const data = JSON.parse(fileData);
 
   let table = '<table border="1">';
-  table += '<tr><th>Uploader</th><th>Description</th> <th>Filename</th><th>Download</th></tr>';
+  table += '<tr><th>Uploader</th><th>Description</th><th>Filename</th><th>Download</th></tr>';
   data.forEach(e => {
     table += `<tr><td>${e.uploader}</td><td>${e.description}</td><td>${e.file}</td>`;
     table += `<td><a href=/api/download/${e.id} target=_blank>Download file</a></td></tr>`;
@@ -51,7 +53,11 @@ function generateFileForm() {
 }
 
 app.post('/api/upload', (req, res, next) => {
-  const form = formidable({});
+
+  const __filename = fileURLToPath(import.meta.url);
+  const __dirname = path.dirname(__filename);
+  express.static(path.join(__dirname, '/uploads'));
+  const form = formidable({ uploadDir: __dirname + '/uploads'});
 
   form.parse(req, (err, fields, files) => {
     if (err) {
@@ -110,6 +116,48 @@ app.get('/api/download/:fileId', (req, res) => {
       console.log('file downloaded successfully');
     }
   })
+})
+
+async function deleteFile(filePath) {
+  try {
+    await fs.unlink(filePath);
+    console.log(`File ${filePath} has been deleted.`);
+  } catch (err) {
+    if (err.code === 'ENOENT') {
+      console.error('The file does not exist');
+    } else {
+      console.error(err);
+      console.log(`Unable to delete file ${filePath}.`);
+    }
+    console.error(err);
+  }
+}
+
+async function removeFromPersistentStorage(index) {
+  if (index > -1) {
+    storage.splice(index, 1);
+    await fs.writeFile('storage.json', JSON.stringify(storage), err => {
+      if (err) {
+        console.error(err);
+      }
+    });
+    console.log('File metadata removed from persistent storage');
+    return;
+  } else {
+    console.log('No uploaded files exists, not able to delete file');
+    return;
+  }
+}
+
+app.delete('/api/file/:id', async (req, res) => {
+  const id = req.params.id;
+  const filePath = storage.find(x => x.id === id).filePath;
+  const index = storage.findIndex(x => x.id === id);
+  // delete the file from system storage
+  await deleteFile(filePath);
+  // remove metadata from persistent storage
+  await removeFromPersistentStorage(index);
+  res.redirect('/')
 })
 
 app.listen(3000, () => {

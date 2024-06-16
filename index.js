@@ -1,19 +1,36 @@
 // kunna ladda upp filer av typ xml, pdf och jpeg samt metadata        [v]
 // spara upladdare, filnamn, beskrivning, datum i datastorage          [v]
 // lista filerna i en kolumn                                           [v]
-// ikoner beskriver de olika filtyperna                                []
 // det ska ga att ladda ner filerna                                    [v]
-// det ska ga att ta bort filerna                                      []
+// det ska ga att ta bort filerna                                      [v]
+// det ska ga att ta bort filerna med knapp i tabellen                 [v]
+// strukturera koden                                                   []
+// snygga till vyn                                                     []
+// ikoner beskriver de olika filtyperna                                []
+// Visa datum da filen laddades upp                                    []
 
 import express, { json } from 'express';
 import formidable from 'formidable';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import methodOverride from 'method-override';
+import bodyParser from 'body-parser';
 import fs from 'fs/promises';
 import storage from './storage.json' assert { type: "json" };
 import { v4 as uuidv4 } from 'uuid';
 
 const app = express();
+
+// Middleware
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(methodOverride(function (req, res) {
+    if (req.body && typeof req.body === 'object' && '_method' in req.body) {
+      // look in urlencoded POST bodies and delete it
+      const method = req.body._method;
+      delete req.body._method;
+      return method;
+    }
+  }))
 
 app.get('/', async (req, res) => {
   const fileTable = await generateFileTable();
@@ -33,10 +50,14 @@ async function generateFileTable() {
   const data = JSON.parse(fileData);
 
   let table = '<table border="1">';
-  table += '<tr><th>Uploader</th><th>Description</th><th>Filename</th><th>Download</th></tr>';
+  table += '<tr><th>Uploader</th><th>Description</th><th>Filename</th><th>Download</th></th><th>Delete file</th></tr>';
   data.forEach(e => {
     table += `<tr><td>${e.uploader}</td><td>${e.description}</td><td>${e.file}</td>`;
-    table += `<td><a href=/api/download/${e.id} target=_blank>Download file</a></td></tr>`;
+    table += `<td><a href=/api/download/${e.id} target=_blank>Download file</a></td>`;
+    table += `<td><form action=api/deletefile method=post>`
+    table +=  `<input type=hidden name=_method value="delete">`
+    table +=  `<input type=hidden name=id value=${e.id}>`
+    table += `<button type=submit>Delete file</button></form></td></tr>`;
   });
   table += '</table>';
   return table;
@@ -149,8 +170,8 @@ async function removeFromPersistentStorage(index) {
   }
 }
 
-app.delete('/api/file/:id', async (req, res) => {
-  const id = req.params.id;
+app.delete('/api/deletefile', async (req, res) => {
+  const id = req.body.id;
   const filePath = storage.find(x => x.id === id).filePath;
   const index = storage.findIndex(x => x.id === id);
   // delete the file from system storage

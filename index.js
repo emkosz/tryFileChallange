@@ -1,14 +1,3 @@
-// kunna ladda upp filer av typ xml, pdf och jpeg samt metadata        [v]
-// spara upladdare, filnamn, beskrivning, datum i datastorage          [v]
-// lista filerna i en kolumn                                           [v]
-// det ska ga att ladda ner filerna                                    [v]
-// det ska ga att ta bort filerna                                      [v]
-// det ska ga att ta bort filerna med knapp i tabellen                 [v]
-// strukturera koden                                                   [v]
-// snygga till vyn                                                     []
-// ikoner beskriver de olika filtyperna                                [v]
-// Visa datum da filen laddades upp                                    [v]
-
 import express, { json } from 'express';
 import methodOverride from 'method-override';
 import bodyParser from 'body-parser';
@@ -31,6 +20,8 @@ app.use(methodOverride(function (req, res) {
       return method;
     }
   }))
+
+// ROOT CONTROLLER AND VIEW
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -108,6 +99,8 @@ function generateFileForm() {
   form += '</form>'
   return form;
 }
+
+// DELETE FILE CONTROLLER AND HELPER FUNCTIONS
 
 async function deleteFile(filePath) {
   try {

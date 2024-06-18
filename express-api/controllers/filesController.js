@@ -61,15 +61,3 @@ export const downloadFile = (req, res) => {
     }
   })
 };
-
-// export const deleteFile = async (req, res) => {
-//   const id = req.body.id;
-//   const filePath = storage.find(x => x.id === id).filePath;
-//   const index = storage.findIndex(x => x.id === id);
-
-//   // delete the file from system storage
-//   await removeFileFromStorage(filePath);
-//   // remove metadata from persistent storage
-//   await removeFromPersistentStorage(index);
-//   res.redirect('/')
-// };

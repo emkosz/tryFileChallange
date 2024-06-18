@@ -7,7 +7,7 @@
 // strukturera koden                                                   [v]
 // snygga till vyn                                                     []
 // ikoner beskriver de olika filtyperna                                [v]
-// Visa datum da filen laddades upp                                    []
+// Visa datum da filen laddades upp                                    [v]
 
 import express, { json } from 'express';
 import methodOverride from 'method-override';
@@ -73,7 +73,7 @@ async function generateFileTable() {
   const xmlIcon = '<img src="/public/xml-file-icon.svg" alt="Image">';
 
   let table = '<table border="1">';
-  table += '<tr><th>Icon</th><th>Uploaded by</th><th>Description</th><th>Filename</th><th>Download</th></th><th>Delete file</th></tr>';
+  table += '<tr><th>Icon</th><th>Uploaded by</th><th>Description</th><th>Date</th><th>Filename</th><th>Download</th></th><th>Delete file</th></tr>';
   data.forEach(e => {
     let icon;
     if(e.extension === '.jpg') {
@@ -83,8 +83,12 @@ async function generateFileTable() {
     } else if(e.extension === '.xml') {
       icon = xmlIcon;
     }
+    let timestamp = e.date;
+    let date = new Date(timestamp);
+    const formattedDate = date.toLocaleDateString('sv-SE', { year: 'numeric', month: 'numeric', day: 'numeric' });
+
     table += `<tr><td>${icon}</td>`;
-    table += `<td>${e.uploader}</td><td>${e.description}</td><td>${e.file}</td>`;
+    table += `<td>${e.uploader}</td><td>${e.description}</td><td>${formattedDate}</td><td>${e.file}</td>`;
     table += `<td><a href=/api/file/download/${e.id} target=_blank>Download file</a></td>`;
     table += `<td><form action="/api/file/delete" method="post">`;
     table +=  `<input type=hidden name=_method value="delete">`;

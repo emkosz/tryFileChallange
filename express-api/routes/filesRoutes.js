@@ -1,7 +1,6 @@
 import express from 'express';
 import { uploadFile, downloadFile } from '../controllers/filesController.js';
 
-
 const router = express.Router();
 
 router.post('/api/file/upload', uploadFile);

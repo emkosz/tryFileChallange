@@ -5,7 +5,6 @@ import { fileURLToPath } from 'url';
 import { v4 as uuidv4 } from 'uuid';
 import storage from '../../storage.json' assert { type: "json" };
 import fs from 'fs/promises';
-import { removeFileFromStorage, removeFromPersistentStorage } from '../services/filesService.js';
 
 export const uploadFile = async (req, res, next) => {
   const __filename = fileURLToPath(import.meta.url);

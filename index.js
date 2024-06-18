@@ -4,9 +4,9 @@
 // det ska ga att ladda ner filerna                                    [v]
 // det ska ga att ta bort filerna                                      [v]
 // det ska ga att ta bort filerna med knapp i tabellen                 [v]
-// strukturera koden                                                   []
+// strukturera koden                                                   [v]
 // snygga till vyn                                                     []
-// ikoner beskriver de olika filtyperna                                []
+// ikoner beskriver de olika filtyperna                                [v]
 // Visa datum da filen laddades upp                                    []
 
 import express, { json } from 'express';
@@ -15,6 +15,8 @@ import bodyParser from 'body-parser';
 import filesRouts from './express-api/routes/filesRoutes.js';
 import fs from 'fs/promises';
 import storage from './storage.json' assert { type: "json" };
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 const app = express();
 app.use(filesRouts);
@@ -30,11 +32,24 @@ app.use(methodOverride(function (req, res) {
     }
   }))
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const publicDirectoryPath = path.join(__dirname, 'public');
+app.use('/public', express.static(publicDirectoryPath));
+
 app.get('/', async (req, res) => {
   const fileTable = await generateFileTable();
   const fileForm = generateFileForm()
 
   res.send(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+    <title>Files service</title>
+    <h1>Welcome to Files service</h1>
+    <p>Upload, download or delete files</p>
+    </head>
+    <body>
     <h2>Files</h2>
     <body>${fileTable}</body>
     <h2>Upload files</h2>
@@ -53,11 +68,23 @@ async function readFile(path) {
 async function generateFileTable() {
   const fileMetaData = await readFile('./storage.json');
   const data = JSON.parse(fileMetaData);
+  const pdfIcon = '<img src="/public/pdf-file-icon.svg" alt="Image">';
+  const jpgIcon = '<img src="/public/jpg-file-icon.svg" alt="Image">';
+  const xmlIcon = '<img src="/public/xml-file-icon.svg" alt="Image">';
 
   let table = '<table border="1">';
-  table += '<tr><th>Uploader</th><th>Description</th><th>Filename</th><th>Download</th></th><th>Delete file</th></tr>';
+  table += '<tr><th>Icon</th><th>Uploaded by</th><th>Description</th><th>Filename</th><th>Download</th></th><th>Delete file</th></tr>';
   data.forEach(e => {
-    table += `<tr><td>${e.uploader}</td><td>${e.description}</td><td>${e.file}</td>`;
+    let icon;
+    if(e.extension === '.jpg') {
+      icon = jpgIcon;
+    } else if(e.extension === '.pdf') {
+      icon = pdfIcon;
+    } else if(e.extension === '.xml') {
+      icon = xmlIcon;
+    }
+    table += `<tr><td>${icon}</td>`;
+    table += `<td>${e.uploader}</td><td>${e.description}</td><td>${e.file}</td>`;
     table += `<td><a href=/api/file/download/${e.id} target=_blank>Download file</a></td>`;
     table += `<td><form action="/api/file/delete" method="post">`;
     table +=  `<input type=hidden name=_method value="delete">`;

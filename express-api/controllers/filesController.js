@@ -27,7 +27,7 @@ export const uploadFile = async (req, res, next) => {
         description: fields.description[0],
         file: orgFilename,
         filePath: files.someExpressFiles[0].filepath,
-        extension: "extension",
+        extension: orgFilename.match(/\.[0-9a-z]+$/i)[0],
         date: Date.now(),
         id: uuidv4()
       };
@@ -62,18 +62,14 @@ export const downloadFile = (req, res) => {
   })
 };
 
-export const deleteFile = async (req, res) => {
-  const id = req.body.id;
-  const filePath = storage.find(x => x.id === id).filePath;
-  const index = storage.findIndex(x => x.id === id);
+// export const deleteFile = async (req, res) => {
+//   const id = req.body.id;
+//   const filePath = storage.find(x => x.id === id).filePath;
+//   const index = storage.findIndex(x => x.id === id);
 
-  console.log('id', id);
-  console.log('filePath', filePath);
-  console.log('index', index);
-
-  // delete the file from system storage
-  await removeFileFromStorage(filePath);
-  // remove metadata from persistent storage
-  await removeFromPersistentStorage(index);
-  res.redirect('/')
-};
+//   // delete the file from system storage
+//   await removeFileFromStorage(filePath);
+//   // remove metadata from persistent storage
+//   await removeFromPersistentStorage(index);
+//   res.redirect('/')
+// };
